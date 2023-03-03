@@ -1,7 +1,7 @@
 import time
 import requestConfig as rc
 import re
-
+import datetime as dt
 import requests as req
 from bs4 import BeautifulSoup as bs
 import pandas as pd
@@ -80,6 +80,19 @@ def getAdsMainInfo(singleAdText):
 
     return singleAdDict
 
+def dictToFile(ListAdsDicts:list):
+    path = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\adsOutput{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
+    with open(path, 'w', encoding='utf-8') as file:
+        for adDict in sortedListAdsDicts:
+            file.write(adDict['Id'] + '\n')
+            file.write(adDict['Link'] + '\n')
+            file.write(adDict['Title'] + '\n')
+            file.write(" ".join(adDict['TechInfo']) + '\n')
+            file.write(adDict['Price'] + '\n')
+            file.write(adDict['AddTime'] + '\n\n')
+    return 'Success write to file'
+
+
 
 if __name__ == "__main__":
 
@@ -88,18 +101,12 @@ if __name__ == "__main__":
 
     sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key= lambda adDict: adDict['AddTime'], reverse=True)
 
+    print(dictToFile(sortedListAdsDicts)
+          )
 
 
 
 
-    with open(r'C:\Users\morozsa\PycharmProjects\flatsadsparser\urlsExample.txt', 'w', encoding='utf-8') as file:
-        for adDict in sortedListAdsDicts:
-            file.write(adDict['Id'] + '\n')
-            file.write(adDict['Link'] + '\n')
-            file.write(adDict['Title'] + '\n')
-            file.write(" ".join(adDict['TechInfo']) + '\n')
-            file.write(adDict['Price'] + '\n')
-            file.write(adDict['AddTime'] + '\n\n')
 
 
 

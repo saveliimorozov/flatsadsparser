@@ -60,6 +60,7 @@ def getAdsMainInfo(singleAdText):
 
             price = re.sub(r'[\n\r\s]',"",adMainInfo.find('div', class_='price-spot dalla').find('div', class_='latest_price').text)
 
+            imagesList = [imgAtr.get('data-src') for imgAtr in adMainInfo.findAll('img', class_ = 'owl-lazy')]
 
 
 
@@ -70,7 +71,8 @@ def getAdsMainInfo(singleAdText):
                 'Title': title,
                 'TechInfo' : techInfo,
                 'AddTime' : addTime,
-                'Price' : price
+                'Price' : price,
+                'ImagesList' : imagesList
             }
         except Exception as err:
             print(err)
@@ -89,7 +91,9 @@ def dictToFile(ListAdsDicts:list):
             file.write(adDict['Title'] + '\n')
             file.write(" ".join(adDict['TechInfo']) + '\n')
             file.write(adDict['Price'] + '\n')
-            file.write(adDict['AddTime'] + '\n\n')
+            file.write(adDict['AddTime'] + '\n')
+            file.write("\n".join(adDict['ImagesList']) + '\n\n')
+
     return 'Success write to file'
 
 
@@ -101,8 +105,7 @@ if __name__ == "__main__":
 
     sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key= lambda adDict: adDict['AddTime'], reverse=True)
 
-    print(dictToFile(sortedListAdsDicts)
-          )
+    print(dictToFile(sortedListAdsDicts))
 
 
 

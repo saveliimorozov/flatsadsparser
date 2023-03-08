@@ -4,10 +4,35 @@ import re
 import datetime as dt
 import requests as req
 from bs4 import BeautifulSoup as bs
+import sys
 import pandas as pd
 import random
 
-url = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=1&RealEstateTypeId=5&RealEstateDealTypeId=1&Sort.SortExpression=%22OrderDate%22%20DESC&MunicipalityId=95&CityIdList=95&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=500&Context.Request.Query[Query]=&WithImageOnly=true'
+flatTbilisiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=1&RealEstateTypeId=5&RealEstateDealTypeId=1&Sort.SortExpression=%22OrderDate%22%20DESC&MunicipalityId=95&CityIdList=95&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=500&Context.Request.Query[Query]=&WithImageOnly=true'
+
+houseKobuleti = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%94%D0%BE%D0%BC/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Sort.SortExpression=%22OrderDate%22%20DESC&RealEstateTypeId=4&RealEstateDealTypeId=1&MunicipalityId=3&CityIdList=14&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=600&Context.Request.Query[Query]=&WithImageOnly=true&AreaOfYardFrom=&AreaOfYardTo='
+
+houseTbilisiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%94%D0%BE%D0%BC/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=2&RealEstateTypeId=4&RealEstateDealTypeId=1&MunicipalityId=95&CityIdList=95&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=500&Context.Request.Query[Query]=&WithImageOnly=true&AreaOfYardFrom=&AreaOfYardTo=&Sort.SortExpression=%22OrderDate%22%20DESC'
+
+flatKobuletiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=1&RealEstateTypeId=5&RealEstateDealTypeId=1&Sort.SortExpression=%22OrderDate%22%20DESC&MunicipalityId=3&CityIdList=14&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=600&Context.Request.Query[Query]=&WithImageOnly=true'
+
+
+def urlMaker():
+    print('Please input options like:\nДом/Квартира, ')
+    params = list(map(lambda x: str(x).lower().strip(), input().split(',')))
+
+    if len(params) != 1:
+        print('Wrong data')
+        sys.exit()
+
+    maker = rc.urlMakerDict
+    try:
+        url = 'https://ss.ge/ru/' + maker['недвижимость'] + '/l/' + maker[params[0]] + '/' + maker['аренда'] + '/'
+    except Exception as err:
+        print('Nonexistent data')
+        print(err)
+
+    return url
 
 
 def getSitePageInText(url: str):
@@ -46,33 +71,42 @@ def getAdsMainInfo(singleAdText):
     if adMainInfo:
         try:
             adLink = 'https://www.ss.ge' + adMainInfo.find('div', class_='latest_desc').find('a').get('href')
+            print(adLink)
 
             id = re.search(r'[-]\d{7}', adLink)[0][1:]
 
+            print(id)
+
             title = adMainInfo.find('span', class_='TiTleSpanList').text
 
-            techInfo = [re.sub(r'[\n\r\s]',"",adMainInfo.find('div', class_ = 'latest_flat_km').text),
-                        re.sub(r'[\n\r\s]',"",adMainInfo.find('div', class_='latest_flat_type').text),
-                        re.sub(r'[\n\r\s]',"",adMainInfo.find('div', class_='latest_stair_count').text)
-            ]
+            print(title)
 
-            addTime = adMainInfo.find('div', class_ = 'add_time').text.strip()
+            techInfo = [re.sub(r'[\n\r\s]', "", adMainInfo.find('div', class_='latest_flat_km').text),
+                        re.sub(r'[\n\r\s]', "", adMainInfo.find('div', class_='latest_flat_type').text)
+                        ]
+            stairCount = adMainInfo.find('div', class_='latest_stair_count')
+            if stairCount:
+                techInfo.append(re.sub(r'[\n\r\s]', "", stairCount.text))
+            print(techInfo)
 
-            price = re.sub(r'[\n\r\s]',"",adMainInfo.find('div', class_='price-spot dalla').find('div', class_='latest_price').text)
+            addTime = str(adMainInfo.find('div', class_='add_time').text.strip())
 
-            imagesList = [imgAtr.get('data-src') for imgAtr in adMainInfo.findAll('img', class_ = 'owl-lazy')]
+            addTime = addTime.replace('/', '')
+            print(addTime)
 
+            price = re.sub(r'[\n\r\s]', "",
+                           adMainInfo.find('div', class_='price-spot dalla').find('div', class_='latest_price').text)
 
-
+            imagesList = [imgAtr.get('data-src') for imgAtr in adMainInfo.findAll('img', class_='owl-lazy')]
 
             singleAdDict = {
                 'Link': adLink,
                 'Id': id,
                 'Title': title,
-                'TechInfo' : techInfo,
-                'AddTime' : addTime,
-                'Price' : price,
-                'ImagesList' : imagesList
+                'TechInfo': techInfo,
+                'AddTime': addTime,
+                'Price': price,
+                'ImagesList': imagesList
             }
         except Exception as err:
             print(err)
@@ -82,8 +116,9 @@ def getAdsMainInfo(singleAdText):
 
     return singleAdDict
 
-def dictToFile(ListAdsDicts:list):
-    path = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\adsOutput{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
+
+def dictToFile(ListAdsDicts: list):
+    path = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\Output\adsOutput{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
     with open(path, 'w', encoding='utf-8') as file:
         for adDict in sortedListAdsDicts:
             file.write(adDict['Id'] + '\n')
@@ -97,19 +132,14 @@ def dictToFile(ListAdsDicts:list):
     return 'Success write to file'
 
 
-
 if __name__ == "__main__":
+    url = urlMaker()
+    print(f'Actual page:{url}')
 
     AdsList = getAdsList(getSitePageInText(url))
     print(len(AdsList))
 
-    sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key= lambda adDict: adDict['AddTime'], reverse=True)
+    sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+                                reverse=True)
 
     print(dictToFile(sortedListAdsDicts))
-
-
-
-
-
-
-

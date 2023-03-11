@@ -18,16 +18,22 @@ flatKobuletiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0
 
 
 def urlMaker():
-    print('Please input options like:\nДом/Квартира, ')
+    print('Please input options like:\nДом/Квартира, Город, Цена до($),  Кол-во объявлений(20, 40, 60...)')
     params = list(map(lambda x: str(x).lower().strip(), input().split(',')))
-
-    if len(params) != 1:
+    paramsLenNeeded = 4
+    if len(params) != paramsLenNeeded:
         print('Wrong data')
         sys.exit()
 
     maker = rc.urlMakerDict
     try:
-        url = 'https://ss.ge/ru/' + maker['недвижимость'] + '/l/' + maker[params[0]] + '/' + maker['аренда'] + '/'
+        url = 'https://ss.ge/ru/' + maker['недвижимость'] + '/l/' + maker[params[0]] + \
+              '/' + maker['аренда'] + '/' + '?Sort.SortExpression=%22OrderDate%22%20DESC' + \
+            f'&MunicipalityId={maker[params[1]][0]}&CityIdList={maker[params[1]][1]}' + \
+            '&CurrencyId=2'+ f'&PriceTo={params[2]}' + '&Page=1' + \
+            '&Context.Request.Query[Query]=&WithImageOnly=true'
+
+
     except Exception as err:
         print('Nonexistent data')
         print(err)
@@ -89,6 +95,8 @@ def getAdsMainInfo(singleAdText):
                 techInfo.append(re.sub(r'[\n\r\s]', "", stairCount.text))
             print(techInfo)
 
+            desc = adMainInfo.find('div', class_='DescripTionListB').text.strip()
+
             addTime = str(adMainInfo.find('div', class_='add_time').text.strip())
 
             addTime = addTime.replace('/', '')
@@ -106,7 +114,8 @@ def getAdsMainInfo(singleAdText):
                 'TechInfo': techInfo,
                 'AddTime': addTime,
                 'Price': price,
-                'ImagesList': imagesList
+                'ImagesList': imagesList,
+                'Desc' : desc
             }
         except Exception as err:
             print(err)
@@ -126,6 +135,7 @@ def dictToFile(ListAdsDicts: list):
             file.write(adDict['Title'] + '\n')
             file.write(" ".join(adDict['TechInfo']) + '\n')
             file.write(adDict['Price'] + '\n')
+            file.write(adDict['Desc'] + '\n')
             file.write(adDict['AddTime'] + '\n')
             file.write("\n".join(adDict['ImagesList']) + '\n\n')
 

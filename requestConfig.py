@@ -3,9 +3,10 @@ urlMakerDict = {
     'квартира': '%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0',
     'дом': '%D0%94%D0%BE%D0%BC',
     'аренда': '%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0',
+    'кобулети' : ['3', '14'],
+    'тбилиси' : ['95', '95']
 
 }
-
 cookies = {
     'screenResolution2': 'true',
     'screenResolution2': 'true',

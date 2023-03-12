@@ -5,7 +5,7 @@ import datetime as dt
 import requests as req
 from bs4 import BeautifulSoup as bs
 import sys
-import pandas as pd
+from auth_data import token
 import random
 
 flatTbilisiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=1&RealEstateTypeId=5&RealEstateDealTypeId=1&Sort.SortExpression=%22OrderDate%22%20DESC&MunicipalityId=95&CityIdList=95&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=500&Context.Request.Query[Query]=&WithImageOnly=true'
@@ -141,6 +141,20 @@ def dictToFile(ListAdsDicts: list):
 
     return 'Success write to file'
 
+def adsToBot(adsIdList:list, listAdsDicts:list):
+    with open(r'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\existingIds.txt', 'r+') as file:
+        existingIds = [line.strip() for line in file.readlines()]
+        # print(existingIds)
+        itemsToBot = [item for item in listAdsDicts if item['Id'] not in existingIds]
+        print(len(itemsToBot))
+        file.seek(0, 2)
+        for item in itemsToBot:
+            file.write('\n' +item['Id'])
+
+
+
+
+
 
 if __name__ == "__main__":
     url = urlMaker()
@@ -151,5 +165,9 @@ if __name__ == "__main__":
 
     sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
                                 reverse=True)
+    adsIdList = [item['Id'] for item in sortedListAdsDicts]
+    adsToBot(adsIdList, sortedListAdsDicts)
+
+
 
     print(dictToFile(sortedListAdsDicts))

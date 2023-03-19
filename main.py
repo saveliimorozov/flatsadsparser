@@ -1,4 +1,7 @@
 import time
+
+import telebot
+
 import requestConfig as rc
 import re
 import datetime as dt
@@ -8,13 +11,8 @@ import sys
 from auth_data import token
 import random
 
-flatTbilisiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=1&RealEstateTypeId=5&RealEstateDealTypeId=1&Sort.SortExpression=%22OrderDate%22%20DESC&MunicipalityId=95&CityIdList=95&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=500&Context.Request.Query[Query]=&WithImageOnly=true'
 
-houseKobuleti = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%94%D0%BE%D0%BC/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Sort.SortExpression=%22OrderDate%22%20DESC&RealEstateTypeId=4&RealEstateDealTypeId=1&MunicipalityId=3&CityIdList=14&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=600&Context.Request.Query[Query]=&WithImageOnly=true&AreaOfYardFrom=&AreaOfYardTo='
 
-houseTbilisiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%94%D0%BE%D0%BC/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=2&RealEstateTypeId=4&RealEstateDealTypeId=1&MunicipalityId=95&CityIdList=95&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=500&Context.Request.Query[Query]=&WithImageOnly=true&AreaOfYardFrom=&AreaOfYardTo=&Sort.SortExpression=%22OrderDate%22%20DESC'
-
-flatKobuletiWithPage = 'https://ss.ge/ru/%D0%BD%D0%B5%D0%B4%D0%B2%D0%B8%D0%B6%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C/l/%D0%9A%D0%B2%D0%B0%D1%80%D1%82%D0%B8%D1%80%D0%B0/%D0%90%D1%80%D0%B5%D0%BD%D0%B4%D0%B0?Page=1&RealEstateTypeId=5&RealEstateDealTypeId=1&Sort.SortExpression=%22OrderDate%22%20DESC&MunicipalityId=3&CityIdList=14&PrcSource=2&CommercialRealEstateType=&PriceType=false&CurrencyId=2&PriceTo=600&Context.Request.Query[Query]=&WithImageOnly=true'
 
 
 def urlMaker():
@@ -143,7 +141,7 @@ def dictToFile(ListAdsDicts: list):
 
 def adsToBot(adsIdList:list, listAdsDicts:list):
     with open(r'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\existingIds.txt', 'r+') as file:
-        existingIds = [line.strip() for line in file.readlines()]
+        existingIds = {line.strip() for line in file.readlines()}
         # print(existingIds)
         itemsToBot = [item for item in listAdsDicts if item['Id'] not in existingIds]
         print(len(itemsToBot))
@@ -151,23 +149,52 @@ def adsToBot(adsIdList:list, listAdsDicts:list):
         for item in itemsToBot:
             file.write('\n' +item['Id'])
 
+def telegram_bot(token):
+    from telebot import types
+    bot = telebot.TeleBot(token)
+
+
+    @bot.message_handler(commands=['start'])
+    def start_message(message):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = types.KeyboardButton("Set params")
+        btn2 = types.KeyboardButton("Learn more about bot")
+        markup.add(btn1, btn2)
+        bot.send_message(message.chat.id, f"Hello, {message.from_user.first_name}! "\
+                                          f"You can find flats in Georgia here.\nPlease use menu below.",reply_markup=markup)
+
+    @bot.message_handler(content_types=['text'])
+    def text_message_handler(message):
+
+        if message.text == 'Set params':
+            bot.send_message(message.chat.id, 'You pressed params button')
+        else:
+            start_message(message)
+
+
+
+
+
+
+
+    bot.polling()
 
 
 
 
 
 if __name__ == "__main__":
-    url = urlMaker()
-    print(f'Actual page:{url}')
+    # url = urlMaker()
+    # print(f'Actual page:{url}')
+    #
+    # AdsList = getAdsList(getSitePageInText(url))
+    # print(len(AdsList))
+    #
+    # sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+    #                             reverse=True)
+    # adsIdList = [item['Id'] for item in sortedListAdsDicts]
+    # adsToBot(adsIdList, sortedListAdsDicts)
+    telegram_bot(token)
 
-    AdsList = getAdsList(getSitePageInText(url))
-    print(len(AdsList))
 
-    sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
-                                reverse=True)
-    adsIdList = [item['Id'] for item in sortedListAdsDicts]
-    adsToBot(adsIdList, sortedListAdsDicts)
-
-
-
-    print(dictToFile(sortedListAdsDicts))
+    # print(dictToFile(sortedListAdsDicts))

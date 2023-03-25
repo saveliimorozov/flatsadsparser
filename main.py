@@ -1,6 +1,6 @@
 import time
 import telebot
-
+from botMain import activeUsersSetInt
 import requestConfig as rc
 import re
 import datetime as dt
@@ -135,7 +135,7 @@ def dictToFile(ListAdsDicts: list):
             file.write(adDict['AddTime'] + '\n')
             file.write("\n".join(adDict['ImagesList']) + '\n\n')
             wholeString = f"{adDict['Id']}\n {adDict['Link']}\n" + \
-                            f"{adDict['Title']}\n{''.join(adDict['TechInfo'])}\n" + \
+                            f"{adDict['Title']}\n{' '.join(adDict['TechInfo'])}\n" + \
                             f"{adDict['Price']}\n{adDict['Desc']}\n" + \
                             f"{adDict['AddTime']}\n{' '.join(adDict['ImagesList'])}\n\n"
 
@@ -169,6 +169,7 @@ def bot_only_ads(token):
 
     def ads_to_bot():
 
+
         url = urlMaker(get_user_info(362247085).get('searchParams'))
         print(f'Actual page:{url}')
 
@@ -201,7 +202,7 @@ if __name__ == "__main__":
     # adsToBot(adsIdList, sortedListAdsDicts)
 
 
-    # telegram_bot(token)
+    # print(activeUsersSetInt)
     bot_only_ads(token)
 
     # print(dictToFile(sortedListAdsDicts))

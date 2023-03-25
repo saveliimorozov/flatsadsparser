@@ -7,16 +7,27 @@ from auth_data import token
 import json
 
 
+activeUsrsFile = r'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\activeUsers.txt'
+activeUsersSetInt = set()
+
+
 def telegram_bot(token):
     from telebot import types
     bot = telebot.TeleBot(token)
 
-    def get_user_info(id:int):
+    def get_user_info(id: int):
         dirPath = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\{str(id)}'
         with open(dirPath + r'\user_info.json', 'r') as file:
             curParams = json.loads(file.read())
 
         return curParams
+
+    valuesDictFwd = {
+        'ON✅': True,
+        'OFF❌': False
+    }
+    valuesDictBack = {v: k for k, v in valuesDictFwd.items()}
+
 
 
 
@@ -25,7 +36,8 @@ def telegram_bot(token):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Set params")
         btn2 = types.KeyboardButton("Learn more about bot")
-        markup.add(btn1, btn2)
+        btn3 = types.KeyboardButton("On/Off sending")
+        markup.add(btn1, btn2, btn3)
         bot.send_message(message.chat.id, f"Hello, {message.from_user.first_name}! " \
                                           f"You can find flats in Georgia here.\nPlease use menu below.",
                          reply_markup=markup)
@@ -50,7 +62,8 @@ def telegram_bot(token):
                                'searchParams': {'city': None,
                                                 'flat/house': None,
                                                 'priceTo': None
-                                                }
+                                                },
+                               'activeFlag': False
                                }, file)
 
             def set_params(message):
@@ -63,7 +76,17 @@ def telegram_bot(token):
                 markup.add(btn1, btn2, btn3, btn4)
 
                 bot.send_message(message.chat.id, f'Please use the menu below to edit params.\n' \
-                                                      f'Your current params: {curParams}', reply_markup=markup)
+                                                  f'Your current params: {curParams}', reply_markup=markup)
+            def on_off_sending(message):
+                curParams = get_user_info(message.chat.id)
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn1 = types.KeyboardButton("ON✅")
+                btn2 = types.KeyboardButton("OFF❌")
+                btn3 = types.KeyboardButton("Main menu")
+                markup.add(btn1, btn2, btn3)
+                bot.send_message(message.chat.id, f'You can enable and disable sending messages with new ads.\n'
+                                                  f'Current status: {valuesDictBack[curParams.get("activeFlag")]} ',
+                                 reply_markup=markup)
 
             if message.text == 'City':
                 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -132,6 +155,55 @@ def telegram_bot(token):
 
 
 
+            elif message.text == 'On/Off sending':
+                on_off_sending(message)
+
+
+
+            elif message.text == 'ON✅' or message.text == 'OFF❌':
+
+                global activeUsersSetInt
+
+                curParams = get_user_info(message.chat.id)
+                print(curParams)
+
+                curParams['activeFlag'] = valuesDictFwd[message.text]
+                print(curParams)
+                with open(dirPath + r'\user_info.json', 'w') as file:
+                    json.dump(curParams, file)
+                    bot.send_message(message.chat.id, f'Success! Current status: {message.text}')
+                    time.sleep(1)
+                with open (activeUsrsFile, 'r') as file:
+                    activeUsersSetStr = set(file.read().split(';'))
+                    activeUsersSetStr.discard('')
+                    activeUsersSetInt = set()
+                    print(activeUsersSetStr)
+                    if activeUsersSetStr:
+                        activeUsersSetInt = {int(user) for user in activeUsersSetStr}
+                    print(f'Active users list: {activeUsersSetInt}')
+
+                print(message.chat.id in activeUsersSetInt, valuesDictFwd[message.text] )
+                if (message.chat.id in activeUsersSetInt) != valuesDictFwd[message.text]:
+
+                    if message.chat.id in activeUsersSetInt:
+                        activeUsersSetInt.discard(message.chat.id)
+                    else:
+                        activeUsersSetInt.add(message.chat.id)
+                    with open(activeUsrsFile, 'w') as file:
+                        for user in activeUsersSetInt:
+                            file.write(str(user) + ";")
+
+
+
+                on_off_sending(message)
+
+
+
+
+
+
+
+
             else:
                 start_message(message)
 
@@ -139,5 +211,6 @@ def telegram_bot(token):
             print(f'Something went wrong...\n{err}')
 
     bot.infinity_polling()
+
 
 telegram_bot(token)

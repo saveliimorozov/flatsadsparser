@@ -1,13 +1,8 @@
 import time
-import asyncio
 import telebot
 
-import requestConfig as rc
-import re
 import datetime as dt
-import requests as req
-from bs4 import BeautifulSoup as bs
-import sys
+
 from auth_data import token
 import json
 

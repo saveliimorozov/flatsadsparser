@@ -8,7 +8,20 @@ import json
 
 
 activeUsrsFile = r'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\activeUsers.txt'
-activeUsersSetInt = set()
+
+def get_active_users_set(activeUsrsFile: str):
+    with open(activeUsrsFile, 'r') as file:
+        activeUsersSetStr = set(file.read().split(';'))
+        activeUsersSetStr.discard('')
+        activeUsersSetInt = set()
+        print(activeUsersSetStr)
+        if activeUsersSetStr:
+            activeUsersSetInt = {int(user) for user in activeUsersSetStr}
+        print(f'Active users list: {activeUsersSetInt}')
+        return activeUsersSetInt
+
+
+
 
 
 def telegram_bot(token):
@@ -27,6 +40,8 @@ def telegram_bot(token):
         'OFF❌': False
     }
     valuesDictBack = {v: k for k, v in valuesDictFwd.items()}
+
+
 
 
 
@@ -59,9 +74,9 @@ def telegram_bot(token):
                                'username': message.chat.username,
                                'first_name': message.chat.first_name,
                                'last_name': message.chat.last_name,
-                               'searchParams': {'city': None,
-                                                'flat/house': None,
-                                                'priceTo': None
+                               'searchParams': {'city': 'Tbilisi',
+                                                'flat/house': 'Flat',
+                                                'priceTo': 500
                                                 },
                                'activeFlag': False
                                }, file)
@@ -162,8 +177,6 @@ def telegram_bot(token):
 
             elif message.text == 'ON✅' or message.text == 'OFF❌':
 
-                global activeUsersSetInt
-
                 curParams = get_user_info(message.chat.id)
                 print(curParams)
 
@@ -173,14 +186,8 @@ def telegram_bot(token):
                     json.dump(curParams, file)
                     bot.send_message(message.chat.id, f'Success! Current status: {message.text}')
                     time.sleep(1)
-                with open (activeUsrsFile, 'r') as file:
-                    activeUsersSetStr = set(file.read().split(';'))
-                    activeUsersSetStr.discard('')
-                    activeUsersSetInt = set()
-                    print(activeUsersSetStr)
-                    if activeUsersSetStr:
-                        activeUsersSetInt = {int(user) for user in activeUsersSetStr}
-                    print(f'Active users list: {activeUsersSetInt}')
+
+                activeUsersSetInt = get_active_users_set(activeUsrsFile)
 
                 print(message.chat.id in activeUsersSetInt, valuesDictFwd[message.text] )
                 if (message.chat.id in activeUsersSetInt) != valuesDictFwd[message.text]:
@@ -210,7 +217,7 @@ def telegram_bot(token):
         except Exception as err:
             print(f'Something went wrong...\n{err}')
 
-    bot.infinity_polling()
+    bot.polling()
 
 
 telegram_bot(token)

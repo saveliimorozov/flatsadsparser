@@ -1,6 +1,6 @@
 import time
 import telebot
-from botMain import activeUsersSetInt
+from botMain import activeUsrsFile, get_active_users_set
 import requestConfig as rc
 import re
 import datetime as dt
@@ -154,34 +154,58 @@ def adsToBot(adsIdList: list, listAdsDicts: list):
         for item in itemsToBot:
             file.write('\n' + item['Id'])
 
+def get_user_info(id: int):
+    curParams = {}
+    try:
+        dirPath = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\{str(id)}'
+        with open(dirPath + r'\user_info.json', 'r') as file:
+            curParams = json.loads(file.read())
+    except Exception as err:
+        print(err)
+
+    return curParams
+
+def makeActUserParams(activeUsrsFile: str):
+    actUserParamsDict = {}
+    activeUsersSetInt = get_active_users_set(activeUsrsFile)
+    for userId in activeUsersSetInt:
+        userInfo = get_user_info(userId).get('searchParams')
+        if userInfo:
+            actUserParamsDict[userId] = userInfo
+    # print(actUserParamsDict)
+    return actUserParamsDict
+
+
+
+
+
+
 
 
 
 def bot_only_ads(token):
     bot = telebot.TeleBot(token)
 
-    def get_user_info(id: int):
-        dirPath = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\{str(id)}'
-        with open(dirPath + r'\user_info.json', 'r') as file:
-            curParams = json.loads(file.read())
 
-        return curParams
 
     def ads_to_bot():
 
 
-        url = urlMaker(get_user_info(362247085).get('searchParams'))
-        print(f'Actual page:{url}')
+        # url = urlMaker(get_user_info(362247085).get('searchParams'))
+        # print(f'Actual page:{url}')
+        #
+        # AdsList = getAdsList(getSitePageInText(url))
+        # print(len(AdsList))
+        #
+        # sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+        #                             reverse=True)
+        # print(wholeString := dictToFile(sortedListAdsDicts))
+        # bot.send_message(362247085, wholeString)
+        # bot.send_message(362247085, makeActUserParams(activeUsersSetInt))
+        print(makeActUserParams(activeUsrsFile))
 
-        AdsList = getAdsList(getSitePageInText(url))
-        print(len(AdsList))
 
-        sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
-                                    reverse=True)
-        print(wholeString := dictToFile(sortedListAdsDicts))
-        bot.send_message(362247085, wholeString)
-
-    schedule.every(30).seconds.do(ads_to_bot)
+    schedule.every(10).seconds.do(ads_to_bot)
 
     while True:
         schedule.run_pending()

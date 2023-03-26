@@ -175,6 +175,20 @@ def makeActUserParams(activeUsrsFile: str):
     # print(actUserParamsDict)
     return actUserParamsDict
 
+def getResponsesForActUsers(actUserParamsDict):
+    responsesForActUsers = {}
+    for userId, params in actUserParamsDict.items():
+        url = urlMaker(params)
+        print(f'Actual page:{url}')
+
+        AdsList = getAdsList(getSitePageInText(url))
+        sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+                                    reverse=True)
+        responsesForActUsers[userId] = sortedListAdsDicts
+    return responsesForActUsers
+
+
+
 
 
 
@@ -202,7 +216,13 @@ def bot_only_ads(token):
         # print(wholeString := dictToFile(sortedListAdsDicts))
         # bot.send_message(362247085, wholeString)
         # bot.send_message(362247085, makeActUserParams(activeUsersSetInt))
-        print(makeActUserParams(activeUsrsFile))
+        actUsrParams = makeActUserParams(activeUsrsFile)
+        print(actUsrParams)
+        if actUsrParams:
+            print(getResponsesForActUsers(actUsrParams))
+        else:
+            print('Nothing to send')
+
 
 
     schedule.every(10).seconds.do(ads_to_bot)

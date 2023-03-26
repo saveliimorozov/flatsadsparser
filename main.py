@@ -1,5 +1,6 @@
 import time
 import telebot
+from telebot import types
 from botMain import activeUsrsFile, get_active_users_set
 import requestConfig as rc
 import re
@@ -178,13 +179,16 @@ def makeActUserParams(activeUsrsFile: str):
 def getResponsesForActUsers(actUserParamsDict):
     responsesForActUsers = {}
     for userId, params in actUserParamsDict.items():
-        url = urlMaker(params)
-        print(f'Actual page:{url}')
+        try:
+            url = urlMaker(params)
+            print(f'Actual page:{url}')
 
-        AdsList = getAdsList(getSitePageInText(url))
-        sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
-                                    reverse=True)
-        responsesForActUsers[userId] = sortedListAdsDicts
+            AdsList = getAdsList(getSitePageInText(url))
+            sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+                                        reverse=True)
+            responsesForActUsers[userId] = sortedListAdsDicts
+        except Exception as err:
+            print(f'Smth went wrong while getting info from url:\n{err}')
     return responsesForActUsers
 
 
@@ -197,38 +201,69 @@ def getResponsesForActUsers(actUserParamsDict):
 
 
 
-def bot_only_ads(token):
+
+
+
+
+
+
+def ads_to_bot(token):
     bot = telebot.TeleBot(token)
 
+    def transform_and_send(responsesForActUsers: dict):
+        for userId, response in responsesForActUsers.items():
+            for singleAd in response:
+
+                textMessage = f"[{singleAd['Title']}]({singleAd['Link']})\n" \
+                                f"{' '.join(singleAd['TechInfo'])}\n" + \
+                                f"{singleAd['Price']}\n{singleAd['Desc']}\n" + \
+                                f"{singleAd['AddTime']}\n"
+                print(textMessage)
+                images = []
+                imagesFromResponse = singleAd['ImagesList']
+
+                if imagesFromResponse:
+                    img1 = types.InputMediaPhoto(imagesFromResponse[-1], caption=textMessage, parse_mode='Markdown')
+                    images.append(img1)
+                print(f'Images after first:{images}')
+                for i in range(len(imagesFromResponse) -1):
+                    imgNext = types.InputMediaPhoto(imagesFromResponse[i])
+                    images.append(imgNext)
+                print(f'Images finally:{images}')
+                try:
+                    bot.send_media_group(userId, images)
+                except Exception as err:
+                    print(f'Fail to send message:\n{err}')
+        return 'Finished transform and sending messages'
 
 
-    def ads_to_bot():
 
-
-        # url = urlMaker(get_user_info(362247085).get('searchParams'))
-        # print(f'Actual page:{url}')
-        #
-        # AdsList = getAdsList(getSitePageInText(url))
-        # print(len(AdsList))
-        #
-        # sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
-        #                             reverse=True)
-        # print(wholeString := dictToFile(sortedListAdsDicts))
-        # bot.send_message(362247085, wholeString)
-        # bot.send_message(362247085, makeActUserParams(activeUsersSetInt))
-        actUsrParams = makeActUserParams(activeUsrsFile)
-        print(actUsrParams)
-        if actUsrParams:
-            print(getResponsesForActUsers(actUsrParams))
-        else:
-            print('Nothing to send')
+    actUsrParams = makeActUserParams(activeUsrsFile)
+    print(actUsrParams)
+    if actUsrParams:
+        responses = getResponsesForActUsers(actUsrParams)
+        print(responses)
+        print(transform_and_send(responses))
+    else:
+        print('Nothing to send')
 
 
 
-    schedule.every(10).seconds.do(ads_to_bot)
+
+
+
+
+
+
+
+
+def main():
+    schedule.every(10).seconds.do(ads_to_bot, token)
 
     while True:
         schedule.run_pending()
+
+
 
 
 
@@ -245,8 +280,9 @@ if __name__ == "__main__":
     # adsIdList = [item['Id'] for item in sortedListAdsDicts]
     # adsToBot(adsIdList, sortedListAdsDicts)
 
+    main()
+
 
     # print(activeUsersSetInt)
-    bot_only_ads(token)
 
     # print(dictToFile(sortedListAdsDicts))

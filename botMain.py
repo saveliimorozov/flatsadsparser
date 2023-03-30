@@ -7,7 +7,8 @@ from auth_data import token
 import json
 
 
-activeUsrsFile = r'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\activeUsers.txt'
+activeUsrsFile = r'D:\SAVELII\Python projects\flatsadsparser\toBot\activeUsers.txt'
+mainDir = r'D:\SAVELII\Python projects\flatsadsparser\toBot'
 
 def get_active_users_set(activeUsrsFile: str):
     with open(activeUsrsFile, 'r') as file:
@@ -29,7 +30,7 @@ def telegram_bot(token):
     bot = telebot.TeleBot(token)
 
     def get_user_info(id: int):
-        dirPath = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\{str(id)}'
+        dirPath = mainDir + '\\' + str(id)
         with open(dirPath + r'\user_info.json', 'r') as file:
             curParams = json.loads(file.read())
 
@@ -62,7 +63,7 @@ def telegram_bot(token):
         try:
             import os.path
 
-            dirPath = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\{str(message.chat.id)}'
+            dirPath = dirPath = mainDir + '\\' + str(message.chat.id)
             # print(dirPath)
             # print(message.chat)
             if not os.path.exists(dirPath):
@@ -219,5 +220,7 @@ def telegram_bot(token):
 
     bot.polling()
 
-
-telegram_bot(token)
+try:
+    telegram_bot(token)
+except Exception as err:
+    print(err)

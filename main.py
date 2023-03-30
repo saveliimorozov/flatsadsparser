@@ -47,7 +47,7 @@ def getSitePageInText(url: str):
     print(urlReq)
     time.sleep(1)
 
-    with open(r'C:\Users\morozsa\PycharmProjects\flatsadsparser\requestPage.html', 'w', encoding='utf-8') as file:
+    with open(r'D:\SAVELII\Python projects\flatsadsparser\requestPage.html', 'w', encoding='utf-8') as file:
         file.write(urlReq.text)
 
     # with open(r'C:\Users\morozsa\PycharmProjects\flatsadsparser\requestPage.html', 'r', encoding='utf-8') as file:
@@ -124,7 +124,7 @@ def getAdsMainInfo(singleAdText):
 
 
 def dictToFile(ListAdsDicts: list):
-    path = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\Output\adsOutput{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
+    path = rf'D:\SAVELII\Python projects\flatsadsparser\Output\adsOutput{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
     with open(path, 'w', encoding='utf-8') as file:
         for adDict in ListAdsDicts:
             file.write(adDict['Id'] + '\n')
@@ -145,20 +145,20 @@ def dictToFile(ListAdsDicts: list):
     return wholeString
 
 
-def adsToBot(adsIdList: list, listAdsDicts: list):
-    with open(r'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\existingIds.txt', 'r+') as file:
-        existingIds = {line.strip() for line in file.readlines()}
-        # print(existingIds)
-        itemsToBot = [item for item in listAdsDicts if item['Id'] not in existingIds]
-        print(len(itemsToBot))
-        file.seek(0, 2)
-        for item in itemsToBot:
-            file.write('\n' + item['Id'])
+# def adsToBot(adsIdList: list, listAdsDicts: list):
+#     with open(r'D:\SAVELII\Python projects\flatsadsparser\toBot\existingIds.txt', 'r+') as file:
+#         existingIds = {line.strip() for line in file.readlines()}
+#         # print(existingIds)
+#         itemsToBot = [item for item in listAdsDicts if item['Id'] not in existingIds]
+#         print(len(itemsToBot))
+#         file.seek(0, 2)
+#         for item in itemsToBot:
+#             file.write('\n' + item['Id'])
 
 def get_user_info(id: int):
     curParams = {}
     try:
-        dirPath = rf'C:\Users\morozsa\PycharmProjects\flatsadsparser\toBot\{str(id)}'
+        dirPath = rf'D:\SAVELII\Python projects\flatsadsparser\toBot\{str(id)}'
         with open(dirPath + r'\user_info.json', 'r') as file:
             curParams = json.loads(file.read())
     except Exception as err:
@@ -208,6 +208,7 @@ def getResponsesForActUsers(actUserParamsDict):
 
 
 def ads_to_bot(token):
+
     bot = telebot.TeleBot(token)
 
     def transform_and_send(responsesForActUsers: dict):
@@ -279,8 +280,10 @@ if __name__ == "__main__":
     #                             reverse=True)
     # adsIdList = [item['Id'] for item in sortedListAdsDicts]
     # adsToBot(adsIdList, sortedListAdsDicts)
-
-    main()
+    try:
+        main()
+    except Exception as err:
+        print(err)
 
 
     # print(activeUsersSetInt)

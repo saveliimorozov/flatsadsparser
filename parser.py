@@ -1,7 +1,7 @@
 import time
 import telebot
 from telebot import types
-from botMain import activeUsrsFile, get_active_users_set
+
 import requestConfig as rc
 import re
 import datetime as dt
@@ -10,11 +10,26 @@ from bs4 import BeautifulSoup as bs
 import sys
 from auth_data import token
 import json
-import random
-import schedule
+# import random
+# import schedule
+
+activeUsrsFile = r'D:\SAVELII\Python projects\flatsadsparser\toBot\activeUsers.txt'
+mainDir = r'D:\SAVELII\Python projects\flatsadsparser\toBot'
+
+def get_active_users_set(activeUsrsFile: str):
+    with open(activeUsrsFile, 'r') as file:
+        activeUsersSetStr = set(file.read().split(';'))
+        activeUsersSetStr.discard('')
+        activeUsersSetInt = set()
+        print(activeUsersSetStr)
+        if activeUsersSetStr:
+            activeUsersSetInt = {int(user) for user in activeUsersSetStr}
+        print(f'Active users list: {activeUsersSetInt}')
+        return activeUsersSetInt
 
 
 def urlMaker(params):
+    url = ''
     # print('Please input options like:\nДом/Квартира, Город, Цена до($),  Кол-во объявлений(20, 40, 60...)')
     # params = list(map(lambda x: str(x).lower().strip(), input().split(',')))
     paramsLenNeeded = 3
@@ -135,25 +150,23 @@ def dictToFile(ListAdsDicts: list):
             file.write(adDict['Desc'] + '\n')
             file.write(adDict['AddTime'] + '\n')
             file.write("\n".join(adDict['ImagesList']) + '\n\n')
-            wholeString = f"{adDict['Id']}\n {adDict['Link']}\n" + \
-                            f"{adDict['Title']}\n{' '.join(adDict['TechInfo'])}\n" + \
-                            f"{adDict['Price']}\n{adDict['Desc']}\n" + \
-                            f"{adDict['AddTime']}\n{' '.join(adDict['ImagesList'])}\n\n"
+
+    return "Success wrote to Output"
 
 
+def existence_check(listAdsDicts: list, userId:int):
+    filePath = mainDir + rf'\{str(userId)}\existingId.txt'
+    with open(filePath, 'r') as file:
+        existingIds = [line.strip() for line in file.readlines()]
+    print(existingIds)
+    itemsToBot = [item for item in listAdsDicts if item['Id'] not in existingIds]
+    newIds = [item['Id'] for item in itemsToBot]
+    print('Len of new items:',len(itemsToBot))
 
-    return wholeString
-
-
-# def adsToBot(adsIdList: list, listAdsDicts: list):
-#     with open(r'D:\SAVELII\Python projects\flatsadsparser\toBot\existingIds.txt', 'r+') as file:
-#         existingIds = {line.strip() for line in file.readlines()}
-#         # print(existingIds)
-#         itemsToBot = [item for item in listAdsDicts if item['Id'] not in existingIds]
-#         print(len(itemsToBot))
-#         file.seek(0, 2)
-#         for item in itemsToBot:
-#             file.write('\n' + item['Id'])
+    with open(filePath, 'w') as file:
+        for id in (existingIds + newIds):
+            file.write(str(id) + '\n')
+    return itemsToBot
 
 def get_user_info(id: int):
     curParams = {}
@@ -166,6 +179,7 @@ def get_user_info(id: int):
 
     return curParams
 
+
 def makeActUserParams(activeUsrsFile: str):
     actUserParamsDict = {}
     activeUsersSetInt = get_active_users_set(activeUsrsFile)
@@ -176,6 +190,7 @@ def makeActUserParams(activeUsrsFile: str):
     # print(actUserParamsDict)
     return actUserParamsDict
 
+
 def getResponsesForActUsers(actUserParamsDict):
     responsesForActUsers = {}
     for userId, params in actUserParamsDict.items():
@@ -184,30 +199,20 @@ def getResponsesForActUsers(actUserParamsDict):
             print(f'Actual page:{url}')
 
             AdsList = getAdsList(getSitePageInText(url))
-            sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+            sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList],
+                                        key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
                                         reverse=True)
-            responsesForActUsers[userId] = sortedListAdsDicts
+            #existence_check
+            finalListAdsDicts = existence_check(sortedListAdsDicts, userId)
+
+            responsesForActUsers[userId] = finalListAdsDicts
         except Exception as err:
             print(f'Smth went wrong while getting info from url:\n{err}')
     return responsesForActUsers
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def ads_to_bot(token):
+    print('Start ads_to_bot')
 
     bot = telebot.TeleBot(token)
 
@@ -216,9 +221,9 @@ def ads_to_bot(token):
             for singleAd in response:
 
                 textMessage = f"[{singleAd['Title']}]({singleAd['Link']})\n" \
-                                f"{' '.join(singleAd['TechInfo'])}\n" + \
-                                f"{singleAd['Price']}\n{singleAd['Desc']}\n" + \
-                                f"{singleAd['AddTime']}\n"
+                              f"{' '.join(singleAd['TechInfo'])}\n" + \
+                              f"{singleAd['Price']}\n{singleAd['Desc']}\n" + \
+                              f"{singleAd['AddTime']}\n"
                 print(textMessage)
                 images = []
                 imagesFromResponse = singleAd['ImagesList']
@@ -227,7 +232,7 @@ def ads_to_bot(token):
                     img1 = types.InputMediaPhoto(imagesFromResponse[-1], caption=textMessage, parse_mode='Markdown')
                     images.append(img1)
                 print(f'Images after first:{images}')
-                for i in range(len(imagesFromResponse) -1):
+                for i in range(len(imagesFromResponse) - 1):
                     imgNext = types.InputMediaPhoto(imagesFromResponse[i])
                     images.append(imgNext)
                 print(f'Images finally:{images}')
@@ -236,8 +241,6 @@ def ads_to_bot(token):
                 except Exception as err:
                     print(f'Fail to send message:\n{err}')
         return 'Finished transform and sending messages'
-
-
 
     actUsrParams = makeActUserParams(activeUsrsFile)
     print(actUsrParams)
@@ -249,43 +252,32 @@ def ads_to_bot(token):
         print('Nothing to send')
 
 
+# schedule.every(10).seconds.do(ads_to_bot, token)
+#
+# while True:
+#     schedule.run_pending()
+if __name__ == '__main__':
+
+    ads_to_bot(token)
+
+#
+# if __name__ == "__main__":
+#     # url = urlMaker()
+#     # print(f'Actual page:{url}')
+#     #
+#     # AdsList = getAdsList(getSitePageInText(url))
+#     # print(len(AdsList))
+#     #
+#     # sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
+#     #                             reverse=True)
+#     # adsIdList = [item['Id'] for item in sortedListAdsDicts]
+#     # adsToBot(adsIdList, sortedListAdsDicts)
+#     try:
+#         main()
+#     except Exception as err:
+#         print(err)
 
 
+# print(activeUsersSetInt)
 
-
-
-
-
-
-
-def main():
-    schedule.every(10).seconds.do(ads_to_bot, token)
-
-    while True:
-        schedule.run_pending()
-
-
-
-
-
-
-if __name__ == "__main__":
-    # url = urlMaker()
-    # print(f'Actual page:{url}')
-    #
-    # AdsList = getAdsList(getSitePageInText(url))
-    # print(len(AdsList))
-    #
-    # sortedListAdsDicts = sorted([getAdsMainInfo(ad) for ad in AdsList], key=lambda adDict: dt.datetime.strptime(adDict['AddTime'], "%d.%m.%Y %H:%M"),
-    #                             reverse=True)
-    # adsIdList = [item['Id'] for item in sortedListAdsDicts]
-    # adsToBot(adsIdList, sortedListAdsDicts)
-    try:
-        main()
-    except Exception as err:
-        print(err)
-
-
-    # print(activeUsersSetInt)
-
-    # print(dictToFile(sortedListAdsDicts))
+# print(dictToFile(sortedListAdsDicts))

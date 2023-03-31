@@ -1,6 +1,7 @@
 import time
 import telebot
-
+import parser
+import threading
 import datetime as dt
 
 from auth_data import token
@@ -70,6 +71,8 @@ def telegram_bot(token):
                 os.mkdir(dirPath)
                 os.mkdir(dirPath + r'\Logs')
                 os.mkdir(dirPath + r'\Output')
+                with open(dirPath + r'\existingId.txt', 'w') as file:
+                    pass
                 with open(dirPath + r'\user_info.json', 'w') as file:
                     json.dump({'id': message.chat.id,
                                'username': message.chat.username,
@@ -218,9 +221,21 @@ def telegram_bot(token):
         except Exception as err:
             print(f'Something went wrong...\n{err}')
 
+    def send_ads_to_users(activeUsersSetInt):
+        while True:
+            current_time = time.strftime("%H:%M:%S", time.localtime())
+            for user_id in activeUsersSetInt:
+                bot.send_message(user_id, current_time)
+            time.sleep(20)
+
+
+    send_thread = threading.Thread(target=send_ads_to_users, args=(get_active_users_set(activeUsrsFile),))
+    send_thread.start()
     bot.polling()
 
-try:
-    telegram_bot(token)
-except Exception as err:
-    print(err)
+
+if __name__ == '__main__':
+    try:
+        telegram_bot(token)
+    except Exception as err:
+        print(err)

@@ -138,8 +138,8 @@ def getAdsMainInfo(singleAdText):
     return singleAdDict
 
 
-def dictToFile(ListAdsDicts: list):
-    path = rf'D:\SAVELII\Python projects\flatsadsparser\Output\adsOutput{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
+def dictToFile(ListAdsDicts: list, userId:int):
+    path = mainDir + rf'\{str(userId)}\Output\{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.txt'
     with open(path, 'w', encoding='utf-8') as file:
         for adDict in ListAdsDicts:
             file.write(adDict['Id'] + '\n')
@@ -204,8 +204,8 @@ def getResponsesForActUsers(actUserParamsDict):
                                         reverse=True)
             #existence_check
             finalListAdsDicts = existence_check(sortedListAdsDicts, userId)
-
             responsesForActUsers[userId] = finalListAdsDicts
+            print(dictToFile(finalListAdsDicts,userId))
         except Exception as err:
             print(f'Smth went wrong while getting info from url:\n{err}')
     return responsesForActUsers
@@ -247,7 +247,7 @@ def ads_to_bot(token):
     if actUsrParams:
         responses = getResponsesForActUsers(actUsrParams)
         print(responses)
-        print(transform_and_send(responses))
+        # print(transform_and_send(responses))
     else:
         print('Nothing to send')
 

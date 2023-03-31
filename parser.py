@@ -211,36 +211,37 @@ def getResponsesForActUsers(actUserParamsDict):
     return responsesForActUsers
 
 
-def ads_to_bot(token):
-    print('Start ads_to_bot')
+def get_ads_for_all_users():
+    print('Start get_ads_for_all_users')
+    responses = {}
 
-    bot = telebot.TeleBot(token)
+    # bot = telebot.TeleBot(token)
 
-    def transform_and_send(responsesForActUsers: dict):
-        for userId, response in responsesForActUsers.items():
-            for singleAd in response:
-
-                textMessage = f"[{singleAd['Title']}]({singleAd['Link']})\n" \
-                              f"{' '.join(singleAd['TechInfo'])}\n" + \
-                              f"{singleAd['Price']}\n{singleAd['Desc']}\n" + \
-                              f"{singleAd['AddTime']}\n"
-                print(textMessage)
-                images = []
-                imagesFromResponse = singleAd['ImagesList']
-
-                if imagesFromResponse:
-                    img1 = types.InputMediaPhoto(imagesFromResponse[-1], caption=textMessage, parse_mode='Markdown')
-                    images.append(img1)
-                print(f'Images after first:{images}')
-                for i in range(len(imagesFromResponse) - 1):
-                    imgNext = types.InputMediaPhoto(imagesFromResponse[i])
-                    images.append(imgNext)
-                print(f'Images finally:{images}')
-                try:
-                    bot.send_media_group(userId, images)
-                except Exception as err:
-                    print(f'Fail to send message:\n{err}')
-        return 'Finished transform and sending messages'
+    # def transform_and_send(responsesForActUsers: dict):
+    #     for userId, response in responsesForActUsers.items():
+    #         for singleAd in response:
+    #
+    #             textMessage = f"[{singleAd['Title']}]({singleAd['Link']})\n" \
+    #                           f"{' '.join(singleAd['TechInfo'])}\n" + \
+    #                           f"{singleAd['Price']}\n{singleAd['Desc']}\n" + \
+    #                           f"{singleAd['AddTime']}\n"
+    #             print(textMessage)
+    #             images = []
+    #             imagesFromResponse = singleAd['ImagesList']
+    #
+    #             if imagesFromResponse:
+    #                 img1 = types.InputMediaPhoto(imagesFromResponse[-1], caption=textMessage, parse_mode='Markdown')
+    #                 images.append(img1)
+    #             print(f'Images after first:{images}')
+    #             for i in range(len(imagesFromResponse) - 1):
+    #                 imgNext = types.InputMediaPhoto(imagesFromResponse[i])
+    #                 images.append(imgNext)
+    #             print(f'Images finally:{images}')
+    #             try:
+    #                 bot.send_media_group(userId, images)
+    #             except Exception as err:
+    #                 print(f'Fail to send message:\n{err}')
+    #     return 'Finished transform and sending messages'
 
     actUsrParams = makeActUserParams(activeUsrsFile)
     print(actUsrParams)
@@ -250,7 +251,7 @@ def ads_to_bot(token):
         # print(transform_and_send(responses))
     else:
         print('Nothing to send')
-
+    return responses
 
 # schedule.every(10).seconds.do(ads_to_bot, token)
 #
@@ -258,7 +259,7 @@ def ads_to_bot(token):
 #     schedule.run_pending()
 if __name__ == '__main__':
 
-    ads_to_bot(token)
+    get_ads_for_all_users()
 
 #
 # if __name__ == "__main__":

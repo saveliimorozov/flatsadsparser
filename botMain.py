@@ -11,6 +11,8 @@ import json
 activeUsrsFile = r'D:\SAVELII\Python projects\flatsadsparser\toBot\activeUsers.txt'
 mainDir = r'D:\SAVELII\Python projects\flatsadsparser\toBot'
 
+botCreator = '@armpitwife'
+
 def get_active_users_set(activeUsrsFile: str):
     with open(activeUsrsFile, 'r') as file:
         activeUsersSetStr = set(file.read().split(';'))
@@ -61,10 +63,11 @@ def telegram_bot(token):
 
     @bot.message_handler(content_types=['text'])
     def text_message_handler(message):
+        dirPath = mainDir + '\\' + str(message.chat.id)
         try:
             import os.path
 
-            dirPath = dirPath = mainDir + '\\' + str(message.chat.id)
+            # dirPath = mainDir + '\\' + str(message.chat.id)
             # print(dirPath)
             # print(message.chat)
             if not os.path.exists(dirPath):
@@ -203,10 +206,12 @@ def telegram_bot(token):
                     with open(activeUsrsFile, 'w') as file:
                         for user in activeUsersSetInt:
                             file.write(str(user) + ";")
-
-
-
                 on_off_sending(message)
+
+
+            elif message.text == 'Learn more about bot':
+                bot.send_message(message.chat.id, f'Author: {botCreator}')
+
 
 
 
@@ -220,13 +225,45 @@ def telegram_bot(token):
 
         except Exception as err:
             print(f'Something went wrong...\n{err}')
+        finally:
+            with open(dirPath + rf'\Logs\{message.chat.username} log.txt', 'a') as file:
+                tconv = lambda x: time.strftime("%d.%m.%Y %H:%M:%S",
+                                                time.localtime(x))  # Конвертация даты в читабельный вид
+                file.write(f'{tconv(message.date)}: {message.text}\n')
+
+
 
     def send_ads_to_users(activeUsersSetInt):
         while True:
-            current_time = time.strftime("%H:%M:%S", time.localtime())
-            for user_id in activeUsersSetInt:
-                bot.send_message(user_id, current_time)
-            time.sleep(20)
+            responses = parser.get_ads_for_all_users()
+            def transform_and_send(responsesForActUsers: dict):
+                for userId, response in responsesForActUsers.items():
+                    for singleAd in response:
+
+                        textMessage = f"[{singleAd['Title']}]({singleAd['Link']})\n" \
+                                      f"{' '.join(singleAd['TechInfo'])}\n" + \
+                                      f"{singleAd['Price']}\n{singleAd['Desc']}\n" + \
+                                      f"{singleAd['AddTime']}\n"
+                        print(textMessage)
+                        images = []
+                        imagesFromResponse = singleAd['ImagesList']
+
+                        if imagesFromResponse:
+                            img1 = types.InputMediaPhoto(imagesFromResponse[-1], caption=textMessage,
+                                                         parse_mode='Markdown')
+                            images.append(img1)
+                        print(f'Images after first:{images}')
+                        for i in range(len(imagesFromResponse) - 1):
+                            imgNext = types.InputMediaPhoto(imagesFromResponse[i])
+                            images.append(imgNext)
+                        print(f'Images finally:{images}')
+                        try:
+                            bot.send_media_group(userId, images)
+                        except Exception as err:
+                            print(f'Fail to send message:\n{err}')
+                return 'Finished transform and sending messages'
+            transform_and_send(responses)
+            time.sleep(40)
 
 
     send_thread = threading.Thread(target=send_ads_to_users, args=(get_active_users_set(activeUsrsFile),))

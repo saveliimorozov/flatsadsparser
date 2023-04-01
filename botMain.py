@@ -226,7 +226,7 @@ def telegram_bot(token):
         except Exception as err:
             print(f'Something went wrong...\n{err}')
         finally:
-            with open(dirPath + rf'\Logs\{message.chat.username} log.txt', 'a') as file:
+            with open(dirPath + rf'\Logs\{message.chat.username} log.txt', 'a', encoding='utf-8') as file:
                 tconv = lambda x: time.strftime("%d.%m.%Y %H:%M:%S",
                                                 time.localtime(x))  # Конвертация даты в читабельный вид
                 file.write(f'{tconv(message.date)}: {message.text}\n')
@@ -263,16 +263,15 @@ def telegram_bot(token):
                             print(f'Fail to send message:\n{err}')
                 return 'Finished transform and sending messages'
             transform_and_send(responses)
-            time.sleep(40)
+            time.sleep(120)
 
 
-    send_thread = threading.Thread(target=send_ads_to_users, args=(get_active_users_set(activeUsrsFile),))
+    send_thread = threading.Thread(target=send_ads_to_users,daemon=True, args=(get_active_users_set(activeUsrsFile),))
     send_thread.start()
-    bot.polling()
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    # bot.polling()
 
 
 if __name__ == '__main__':
-    try:
-        telegram_bot(token)
-    except Exception as err:
-        print(err)
+    telegram_bot(token)
+

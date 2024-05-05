@@ -1,15 +1,17 @@
 import time
 import telebot
-import parser
+import parserForAds as parser
 import threading
 import datetime as dt
+import sys
 
 from auth_data import token
 import json
 
 
-activeUsrsFile = r'D:\SAVELII\Python projects\flatsadsparser\toBot\activeUsers.txt'
-mainDir = r'D:\SAVELII\Python projects\flatsadsparser\toBot'
+# print(sys.path[0])
+activeUsrsFile = rf'{sys.path[0]}/toBot/activeUsers.txt'
+mainDir = rf'{sys.path[0]}/toBot'
 
 botCreator = '@armpitwife'
 
@@ -33,17 +35,19 @@ def telegram_bot(token):
     bot = telebot.TeleBot(token)
 
     def get_user_info(id: int):
-        dirPath = mainDir + '\\' + str(id)
-        with open(dirPath + r'\user_info.json', 'r') as file:
+        dirPath = mainDir + '/' + str(id)
+        with open(dirPath + r'/user_info.json', 'r') as file:
             curParams = json.loads(file.read())
 
         return curParams
 
     valuesDictFwd = {
         'ON✅': True,
-        'OFF❌': False
+        'OFF❌': False,
+        'Indiv. entity only: ON✅' : True,
+        'Indiv. entity only: OFF❌' : False
     }
-    valuesDictBack = {v: k for k, v in valuesDictFwd.items()}
+    # valuesDictBack = {v: k for k, v in valuesDictFwd.items()}
 
 
 
@@ -63,27 +67,28 @@ def telegram_bot(token):
 
     @bot.message_handler(content_types=['text'])
     def text_message_handler(message):
-        dirPath = mainDir + '\\' + str(message.chat.id)
+        dirPath = mainDir + '/' + str(message.chat.id)
         try:
             import os.path
 
-            # dirPath = mainDir + '\\' + str(message.chat.id)
+            # dirPath = mainDir + '/' + str(message.chat.id)
             # print(dirPath)
             # print(message.chat)
             if not os.path.exists(dirPath):
                 os.mkdir(dirPath)
-                os.mkdir(dirPath + r'\Logs')
-                os.mkdir(dirPath + r'\Output')
-                with open(dirPath + r'\existingId.txt', 'w') as file:
+                os.mkdir(dirPath + r'/Logs')
+                os.mkdir(dirPath + r'/Output')
+                with open(dirPath + r'/existingId.txt', 'w') as file:
                     pass
-                with open(dirPath + r'\user_info.json', 'w') as file:
+                with open(dirPath + r'/user_info.json', 'w') as file:
                     json.dump({'id': message.chat.id,
                                'username': message.chat.username,
                                'first_name': message.chat.first_name,
                                'last_name': message.chat.last_name,
                                'searchParams': {'city': 'Tbilisi',
                                                 'flat/house': 'Flat',
-                                                'priceTo': 500
+                                                'priceTo': 500,
+                                                'indEntOnly' : False
                                                 },
                                'activeFlag': False
                                }, file)
@@ -94,8 +99,9 @@ def telegram_bot(token):
                 btn1 = types.KeyboardButton("City")
                 btn2 = types.KeyboardButton("Flat/House")
                 btn3 = types.KeyboardButton("Price to($)")
-                btn4 = types.KeyboardButton("Main menu")
-                markup.add(btn1, btn2, btn3, btn4)
+                btn4 = types.KeyboardButton("Indiv. entity only")
+                btn5 = types.KeyboardButton("Main menu")
+                markup.add(btn1, btn2, btn3, btn4, btn5)
 
                 bot.send_message(message.chat.id, f'Please use the menu below to edit params.\n' \
                                                   f'Your current params: {curParams}', reply_markup=markup)
@@ -107,7 +113,7 @@ def telegram_bot(token):
                 btn3 = types.KeyboardButton("Main menu")
                 markup.add(btn1, btn2, btn3)
                 bot.send_message(message.chat.id, f'You can enable and disable sending messages with new ads.\n'
-                                                  f'Current status: {valuesDictBack[curParams.get("activeFlag")]} ',
+                                                  f'Current status: {"ON✅" if curParams.get("activeFlag") else "OFF❌"} ',
                                  reply_markup=markup)
 
             if message.text == 'City':
@@ -131,7 +137,7 @@ def telegram_bot(token):
 
                 curParams['searchParams']['city'] = message.text
                 print(curParams)
-                with open(dirPath + r'\user_info.json', 'w') as file:
+                with open(dirPath + r'/user_info.json', 'w') as file:
                     json.dump(curParams, file)
                     bot.send_message(message.chat.id, f'Success! Current city: {message.text}')
                     time.sleep(1)
@@ -150,7 +156,7 @@ def telegram_bot(token):
 
                 curParams['searchParams']['flat/house'] = message.text
                 print(curParams)
-                with open(dirPath + r'\user_info.json', 'w') as file:
+                with open(dirPath + r'/user_info.json', 'w') as file:
                     json.dump(curParams, file)
                     bot.send_message(message.chat.id, f'Success! Current property type: {message.text}')
                     time.sleep(1)
@@ -168,7 +174,7 @@ def telegram_bot(token):
 
                 curParams['searchParams']['priceTo'] = message.text
                 print(curParams)
-                with open(dirPath + r'\user_info.json', 'w') as file:
+                with open(dirPath + r'/user_info.json', 'w') as file:
                     json.dump(curParams, file)
                     bot.send_message(message.chat.id, f'Success! Current max price in USD: {message.text}')
                     time.sleep(1)
@@ -189,7 +195,7 @@ def telegram_bot(token):
 
                 curParams['activeFlag'] = valuesDictFwd[message.text]
                 print(curParams)
-                with open(dirPath + r'\user_info.json', 'w') as file:
+                with open(dirPath + r'/user_info.json', 'w') as file:
                     json.dump(curParams, file)
                     bot.send_message(message.chat.id, f'Success! Current status: {message.text}')
                     time.sleep(1)
@@ -208,6 +214,26 @@ def telegram_bot(token):
                             file.write(str(user) + ";")
                 on_off_sending(message)
 
+            elif message.text == "Indiv. entity only":
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+                btn1 = types.KeyboardButton("Indiv. entity only: ON✅")
+                btn2 = types.KeyboardButton("Indiv. entity only: OFF❌")
+                btn3 = types.KeyboardButton("⏎")
+                markup.add(btn1, btn2, btn3)
+                bot.send_message(message.chat.id, 'Choose ON if you want to see ads only from individuals, not from agents.', reply_markup=markup)
+
+            elif message.text == "Indiv. entity only: ON✅" or message.text == "Indiv. entity only: OFF❌":
+                curParams = get_user_info(message.chat.id)
+                print(curParams)
+                
+                curParams['searchParams']['indEntOnly'] = valuesDictFwd[message.text]
+                print(curParams)
+                with open(dirPath + r'/user_info.json', 'w') as file:
+                    json.dump(curParams, file)
+                    bot.send_message(message.chat.id, f'Success! {message.text}')
+                    time.sleep(1)
+                set_params(message)
+                
 
             elif message.text == 'Learn more about bot':
                 bot.send_message(message.chat.id, f'Author: {botCreator}')
@@ -226,7 +252,7 @@ def telegram_bot(token):
         except Exception as err:
             print(f'Something went wrong...\n{err}')
         finally:
-            with open(dirPath + rf'\Logs\{message.chat.username} log.txt', 'a', encoding='utf-8') as file:
+            with open(dirPath + rf'/Logs/{message.chat.username} log.txt', 'a', encoding='utf-8') as file:
                 tconv = lambda x: time.strftime("%d.%m.%Y %H:%M:%S",
                                                 time.localtime(x))  # Конвертация даты в читабельный вид
                 file.write(f'{tconv(message.date)}: {message.text}\n')
